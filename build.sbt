@@ -10,7 +10,7 @@ Compile / run / javaOptions ++= List(
   "-Dnewrelic.config.agent_enabled=true"
 )
 
-val newrelicVersion = "5.3.0"
+val newrelicVersion = "5.4.0"
 
 enablePlugins(JavaAgent)
 javaAgents += "com.newrelic.agent.java" % "newrelic-agent" % newrelicVersion % Runtime
