@@ -3,26 +3,39 @@ package com.riskified.repro
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri.{Authority, Host}
-import akka.http.scaladsl.model.{HttpRequest, Uri}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
 import akka.http.scaladsl.server.{HttpApp, Route}
-import scala.concurrent.Future
+import com.newrelic.api.agent.{NewRelic, Token, Trace}
+import scala.concurrent.{ExecutionContext, Future}
 
 object SampleApp extends HttpApp with App {
   implicit val system: ActorSystem = ActorSystem()
-  import system.dispatcher
+  implicit val ec: ExecutionContext = system.dispatcher
 
   val local = Authority(Host("localhost"), 8822)
   val checkPath = "check"
   val checkUri = Uri(s"http://$local/$checkPath")
+
+  @Trace(async = true)
+  def instrumented(
+      request: HttpRequest,
+      token: Token = NewRelic.getAgent.getTransaction.getToken
+  ): Future[HttpResponse] = {
+    token.link()
+    Http().singleRequest(request)
+  }
+
+  def uninstrumented(request: HttpRequest): Future[HttpResponse] =
+    Http().singleRequest(request)
 
   val route1 = path("") {
     val handling = for {
       txId1 <- Future { TxId.current.tap(txId => println(s"entered route1: $txId")) }
       txId2 = TxId.current.tap(txId => println(s"still in route1: $txId"))
       txId3 <- Future { TxId.current.tap(txId => println(s"still in route1: $txId")) }
-      _ <- Http().singleRequest(HttpRequest().withUri(checkUri))
+      _ <- instrumented(HttpRequest().withUri(checkUri))
       txId4 = TxId.current.tap(txId => println(s"back to route1: $txId"))
-      _ <- Http().singleRequest(HttpRequest().withUri(checkUri))
+      _ <- instrumented(HttpRequest().withUri(checkUri))
       txId5 = TxId.current.tap(txId => println(s"back to route1: $txId"))
     } yield s"""The same TxId should be retained throughout the entire transaction.
          |Instead:
