@@ -7,7 +7,8 @@ scalaVersion := "2.12.9"
 Compile / run / fork := true
 Compile / run / javaOptions ++= List(
   "-Dnewrelic.config.app_name=newrelic-repro-nadavwr",
-  "-Dnewrelic.config.agent_enabled=true"
+  "-Dnewrelic.config.agent_enabled=true",
+  "-Dnewrelic.config.log_level=finest"
 )
 
 val newrelicVersion = "5.4.0"
