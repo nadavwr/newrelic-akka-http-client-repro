@@ -16,6 +16,7 @@ val newrelicVersion = "5.4.0"
 enablePlugins(JavaAgent)
 javaAgents += "com.newrelic.agent.java" % "newrelic-agent" % newrelicVersion % Runtime
 
+
 libraryDependencies ++= List(
   "com.newrelic.agent.java" % "newrelic-api" % newrelicVersion,
   "com.typesafe.akka" %% "akka-http" % "10.1.9",
